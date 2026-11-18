@@ -101,6 +101,18 @@ Start a new chat and ask: *"Summarise my last 7 days from Garmin."*
 curl -s -o /dev/null -w '%{http_code}\n' -X POST https://YOUR-WORKER/mcp   # must print 401
 ```
 
+## Optional: the coach skill
+
+[`skills/garmin-health-coach/SKILL.md`](skills/garmin-health-coach/SKILL.md) teaches the agent *how* to
+use these tools: which ones answer which question, how to read recovery signals together, and how to
+answer like a coach rather than dumping JSON. It's free, like everything else here.
+
+- **Claude Code:** copy the folder to `~/.claude/skills/` (all projects) or `.claude/skills/` (one project).
+- **claude.ai:** zip the `garmin-health-coach` folder and upload it under Settings → Capabilities → Skills.
+- **Other agents** that read `SKILL.md` files: put the folder wherever that agent loads skills from.
+
+Then try: *"Should I train hard today?"* or *"Check my week against my plan."*
+
 ## Local development
 
 ```bash
