@@ -108,7 +108,7 @@ use these tools: which ones answer which question, how to read recovery signals 
 answer like a coach rather than dumping JSON. It's free, like everything else here.
 
 - **Claude Code:** copy the folder to `~/.claude/skills/` (all projects) or `.claude/skills/` (one project).
-- **claude.ai:** zip the `garmin-health-coach` folder and upload it under Settings → Capabilities → Skills.
+- **claude.ai:** zip the `garmin-health-coach` folder and upload it under Settings → Plugins → Skills.
 - **Other agents** that read `SKILL.md` files: put the folder wherever that agent loads skills from.
 
 Then try: *"Should I train hard today?"* or *"Check my week against my plan."*
