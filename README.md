@@ -107,11 +107,17 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST https://YOUR-WORKER/mcp   # mus
 use these tools: which ones answer which question, how to read recovery signals together, and how to
 answer like a coach rather than dumping JSON. It's free, like everything else here.
 
-- **Claude Code:** copy the folder to `~/.claude/skills/` (all projects) or `.claude/skills/` (one project).
-- **claude.ai:** zip the `garmin-health-coach` folder and upload it under Settings → Plugins → Skills.
+- **claude.ai:** download [`dist/garmin-health-coach-plugin.zip`](dist/garmin-health-coach-plugin.zip)
+  (click **Download raw file**), then Settings → Plugins → **Add → Upload plugin** and pick the zip.
+- **Claude Code:** add this repo as a plugin marketplace and install it:
+  ```
+  /plugin marketplace add yershalom/claude-garmin-mcp
+  /plugin install garmin-health-coach@claude-garmin-mcp
+  ```
+  Or copy `skills/garmin-health-coach` into `~/.claude/skills/`.
 - **Other agents** that read `SKILL.md` files: put the folder wherever that agent loads skills from.
 
-Then try: *"Should I train hard today?"* or *"Check my week against my plan."*
+Then try: *"Should I train hard today?"* or *"Compare this week's sleep with last week's."*
 
 ## Local development
 
