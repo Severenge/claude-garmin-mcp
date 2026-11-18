@@ -1,7 +1,7 @@
 # Copy to .dev.vars for local development:  cp .dev.vars.example .dev.vars
 # .dev.vars is git-ignored. Values here override wrangler.jsonc when you run `npm run dev`.
 
-# Garmin Connect personal API key (Garmin Connect web → Personal API Key → Create Key).
+# Garmin Connect personal API key: create one at https://connect.garmin.com/app/settings/personalApiToken
 GARMIN_API_KEY=
 
 # A GitHub OAuth app for local testing, with callback URL http://localhost:8787/callback

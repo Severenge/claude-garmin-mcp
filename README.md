@@ -52,8 +52,9 @@ Claude ──OAuth (GitHub sign-in, only you)──▶ Worker /mcp ──Bearer 
 ## Set it up (about 15 minutes, all in the browser)
 
 ### 1. Garmin API key
-In [Garmin Connect](https://connect.garmin.com) on the web, open the **Personal API Key** page →
+Open the [Personal API Key page](https://connect.garmin.com/app/settings/personalApiToken) in Garmin Connect (sign in on the web if asked) →
 **Create Key** → accept the terms → pick an expiry → **Create**. Copy the key: it's shown once.
+Garmin's own guide: [Garmin Connect Personal API](https://developer.garmin.com/gc-developer-program/personal/personal-api/).
 
 ### 2. Deploy
 Click **Deploy to Cloudflare** above. It forks this repo into your GitHub, creates the KV

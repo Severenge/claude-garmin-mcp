@@ -26,7 +26,7 @@ const tokenRes = await fetch(`${BASE}/personalapitoken-service/personal-api/pers
   headers: { Accept: "*/*", Authorization: `ApiKey ${key}` },
 });
 if (!tokenRes.ok) {
-  console.error(`✗ Token exchange failed: HTTP ${tokenRes.status}. Is the key correct and not expired?`);
+  console.error(`✗ Token exchange failed: HTTP ${tokenRes.status}. Is the key correct and not expired? Manage keys at https://connect.garmin.com/app/settings/personalApiToken`);
   process.exit(1);
 }
 const token = (await tokenRes.text()).trim();
