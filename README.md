@@ -7,6 +7,8 @@ A small, private [MCP](https://modelcontextprotocol.io) server on Cloudflare Wor
 Garmin's official, read-only [Connect Personal API](https://developer.garmin.com/gc-developer-program/personal/personal-api/).
 It costs nothing to run for one person.
 
+📖 **Full write-up:** [Talk to your Garmin data in Claude, for free](https://blog.yershalom.com/posts/garmin-mcp-claude/) (also on [dev.to](https://dev.to/yershalom/talk-to-your-garmin-data-in-claude-for-free-1928))
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/yershalom/claude-garmin-mcp)
 
 ## How it works
