@@ -27,10 +27,22 @@ export function chunkRange(start: string, end: string, size = MAX_CHUNK_DAYS): A
  * concatenated; any other field is kept only if every chunk agrees on it, because a per-chunk
  * aggregate (such as an average) would be wrong for the whole range.
  */
+const DATE_KEYS = ["calendarDate", "summaryDate", "date"] as const;
+
+/** Sort items oldest first by their calendar date, when every item has one; otherwise keep the order. */
+function byDate(items: unknown[]): unknown[] {
+  const key = DATE_KEYS.find((k) =>
+    items.every((i) => i && typeof i === "object" && /^\d{4}-\d{2}-\d{2}/.test(String((i as Record<string, unknown>)[k]))),
+  );
+  if (!key) return items;
+  const d = (i: unknown) => String((i as Record<string, unknown>)[key]);
+  return [...items].sort((a, b) => (d(a) < d(b) ? -1 : d(a) > d(b) ? 1 : 0));
+}
+
 export function mergeChunks(parts: unknown[]): unknown {
   const present = parts.filter((p) => p !== null && p !== undefined);
   if (present.length <= 1) return present[0] ?? null;
-  if (present.every(Array.isArray)) return (present as unknown[][]).flat();
+  if (present.every(Array.isArray)) return byDate((present as unknown[][]).flat());
   if (!present.every((p) => typeof p === "object" && !Array.isArray(p))) return present;
 
   const objs = present as Record<string, unknown>[];
@@ -38,7 +50,7 @@ export function mergeChunks(parts: unknown[]): unknown {
   for (const key of new Set(objs.flatMap((o) => Object.keys(o)))) {
     const values = objs.map((o) => o[key]).filter((v) => v !== undefined);
     if (values.every(Array.isArray)) {
-      out[key] = (values as unknown[][]).flat();
+      out[key] = byDate((values as unknown[][]).flat());
     } else if (values.every((v) => JSON.stringify(v) === JSON.stringify(values[0]))) {
       out[key] = values[0];
     }
