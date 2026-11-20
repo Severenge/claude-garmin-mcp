@@ -22,11 +22,6 @@ export function chunkRange(start: string, end: string, size = MAX_CHUNK_DAYS): A
   return out;
 }
 
-/**
- * Merge chunk responses in order. Arrays are concatenated. For objects, array-valued fields are
- * concatenated; any other field is kept only if every chunk agrees on it, because a per-chunk
- * aggregate (such as an average) would be wrong for the whole range.
- */
 const DATE_KEYS = ["calendarDate", "summaryDate", "date"] as const;
 
 /** Sort items oldest first by their calendar date, when every item has one; otherwise keep the order. */
@@ -39,6 +34,11 @@ function byDate(items: unknown[]): unknown[] {
   return [...items].sort((a, b) => (d(a) < d(b) ? -1 : d(a) > d(b) ? 1 : 0));
 }
 
+/**
+ * Merge chunk responses in order. Arrays are concatenated. For objects, array-valued fields are
+ * concatenated; any other field is kept only if every chunk agrees on it, because a per-chunk
+ * aggregate (such as an average) would be wrong for the whole range.
+ */
 export function mergeChunks(parts: unknown[]): unknown {
   const present = parts.filter((p) => p !== null && p !== undefined);
   if (present.length <= 1) return present[0] ?? null;
