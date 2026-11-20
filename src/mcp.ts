@@ -3,9 +3,13 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { z } from "zod";
 import type { Env, Props } from "./env";
 import { garminGet, GarminError, type Query } from "./garmin";
+import { chunkRange, daySpan, MAX_CHUNK_DAYS, MAX_RANGE_DAYS, mergeChunks } from "./ranges";
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
-const range = { startDate: date.describe("First day, inclusive (YYYY-MM-DD)"), endDate: date.describe("Last day, inclusive (YYYY-MM-DD)") };
+const range = {
+  startDate: date.describe(`First day, inclusive (YYYY-MM-DD). Ranges up to ${MAX_RANGE_DAYS} days are fine.`),
+  endDate: date.describe("Last day, inclusive (YYYY-MM-DD)"),
+};
 const day = { date: date.describe("Calendar day (YYYY-MM-DD)") };
 
 const MAX_CHARS = 200_000;
@@ -52,8 +56,20 @@ function buildServer(env: Env): McpServer {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (async (args: any) => {
         try {
-          const [path, query] = call(args);
-          return result(await garminGet(env, path, query));
+          if (inputSchema !== (range as unknown)) {
+            const [path, query] = call(args);
+            return result(await garminGet(env, path, query));
+          }
+          // Date-range tool: Garmin allows at most 28 days per request, so split longer ranges.
+          const span = daySpan(args.startDate, args.endDate);
+          if (!(span >= 1)) throw new GarminError(400, "endDate must be on or after startDate.");
+          if (span > MAX_RANGE_DAYS) throw new GarminError(400, `Ask for at most ${MAX_RANGE_DAYS} days at a time.`);
+          const parts: unknown[] = [];
+          for (const [startDate, endDate] of chunkRange(args.startDate, args.endDate, MAX_CHUNK_DAYS)) {
+            const [path, query] = call({ ...args, startDate, endDate });
+            parts.push(await garminGet(env, path, query));
+          }
+          return result(mergeChunks(parts));
         } catch (err) {
           return failure(err);
         }

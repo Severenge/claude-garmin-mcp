@@ -51,6 +51,9 @@ Claude ──OAuth (GitHub sign-in, only you)──▶ Worker /mcp ──Bearer 
 | `search_activities`, `get_activity`, `get_activity_workouts`, `list_activity_types` | Workouts, including strength sets and reps |
 | `get_heart_rate_zones`, `get_profile_settings` | Settings |
 
+Date-range tools accept up to a year. Garmin's API only allows 28 days per request, so the server
+splits longer ranges into 28-day requests and merges the results.
+
 ## Set it up (about 15 minutes, all in the browser)
 
 ### 1. Garmin API key
