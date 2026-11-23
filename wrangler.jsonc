@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "garmin-mcp",
+  "name": "garmin-connect-mcp",
   "main": "src/index.ts",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -9,9 +9,9 @@
   "observability": { "enabled": true },
   "vars": {
     // Your GitHub username. Only this account can sign in and connect Claude.
-    "ALLOWED_GITHUB_LOGIN": "your-github-username",
+    "ALLOWED_GITHUB_LOGIN": "Severenge",
     // This Worker's public address, no trailing slash, e.g. https://garmin-mcp.<your-subdomain>.workers.dev
-    "PUBLIC_URL": "https://garmin-mcp.your-subdomain.workers.dev"
+    "PUBLIC_URL": "https://garmin-connect-mcp.rafa-rmello.workers.dev"
   },
   "kv_namespaces": [
     // No id needed: Wrangler and the Deploy button create the namespace on first deploy.
