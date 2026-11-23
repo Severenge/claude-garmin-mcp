@@ -153,3 +153,5 @@ Built with [workers-oauth-provider](https://github.com/cloudflare/workers-oauth-
 [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk).
 
 MIT licensed.
+## Minha integração Garmin
+Instância pessoal para integração com o ChatGPT.
