@@ -73,3 +73,47 @@ export async function garminGet(env: Env, path: string, query: Query = {}): Prom
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
+/** Download the original activity ZIP/FIT file. */
+export async function garminGetBinary(
+  env: Env,
+  activityId: string | number
+): Promise<ArrayBuffer> {
+  const id = String(activityId);
+
+  if (!/^\d+$/.test(id)) {
+    throw new GarminError(400, "Invalid activity ID");
+  }
+
+  const url = new URL(
+    `${BASE_URL}/download-service/files/activity/${id}`
+  );
+
+  let token = await bearerToken(env);
+
+  let res = await fetch(url, {
+    headers: {
+      Accept: "*/*",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.status === 401) {
+    token = await bearerToken(env, true);
+
+    res = await fetch(url, {
+      headers: {
+        Accept: "*/*",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  if (!res.ok) {
+    throw new GarminError(
+      res.status,
+      `Garmin activity download failed (${res.status})`
+    );
+  }
+
+  return await res.arrayBuffer();
+}
