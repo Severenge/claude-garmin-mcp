@@ -1,3 +1,4 @@
+import { decodeActivityFit } from "./fit";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z } from "zod";
@@ -143,6 +144,282 @@ function buildServer(env: Env): McpServer {
 
   tool("get_profile_settings", "Profile settings: units, time zone, height, weight, etc.", {},
     () => ["/userprofile-service/userprofile/settings"]);
+
+  server.registerTool(
+    "get_activity_laps",
+    {
+      description: "Detailed activity laps from the original Garmin FIT file, including distance, pace, heart rate, power, cadence and running dynamics.",
+      inputSchema: {
+        activityId: z.union([
+          z.number().int().positive(),
+          z.string().regex(/^\d+$/)
+        ]),
+        offset: z.number().int().min(0).default(0),
+        limit: z.number().int().min(1).max(100).default(50)
+      },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: true
+      }
+    },
+    async (args) => {
+      try {
+        const data = await decodeActivityFit(
+          env,
+          args.activityId
+        );
+
+        const laps = data.laps as unknown as
+          Record<string, unknown>[];
+
+        const fields = [
+          "totalDistance",
+          "totalTimerTime",
+          "totalElapsedTime",
+          "avgHeartRate",
+          "maxHeartRate",
+          "avgPower",
+          "maxPower",
+          "avgCadence",
+          "maxCadence",
+          "avgFractionalCadence",
+          "avgRunningCadence",
+          "avgSpeed",
+          "enhancedAvgSpeed",
+          "totalAscent",
+          "totalDescent",
+          "avgVerticalOscillation",
+          "avgStanceTime",
+          "avgStepLength",
+          "avgVerticalRatio",
+          "intensity",
+          "lapTrigger"
+        ];
+
+        const selected = laps
+          .slice(args.offset, args.offset + args.limit)
+          .map((lap, index) => {
+            const distance = Number(lap.totalDistance);
+            const duration = Number(lap.totalTimerTime);
+
+            return {
+              lapNumber: args.offset + index + 1,
+              ...Object.fromEntries(
+                fields
+                  .filter(key => lap[key] !== undefined)
+                  .map(key => [key, lap[key]])
+              ),
+              paceSecondsPerKm:
+                distance > 0 && Number.isFinite(duration)
+                  ? Math.round(duration * 1000 / distance)
+                  : null
+            };
+          });
+
+        return result({
+          activityId: data.activityId,
+          totalLaps: data.lapCount,
+          offset: args.offset,
+          returnedLaps: selected.length,
+          laps: selected
+        });
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "get_activity_records",
+    {
+      description: "Time-series activity records from Garmin FIT, including heart rate, speed, power, cadence, altitude and running dynamics. Paginated and without GPS coordinates.",
+      inputSchema: {
+        activityId: z.union([
+          z.number().int().positive(),
+          z.string().regex(/^\d+$/)
+        ]),
+        offset: z.number().int().min(0).default(0),
+        limit: z.number().int().min(1).max(200).default(100)
+      },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: true
+      }
+    },
+    async (args) => {
+      try {
+        const data = await decodeActivityFit(
+          env,
+          args.activityId
+        );
+
+        const records = data.records as unknown as
+          Record<string, unknown>[];
+
+        const fields = [
+          "timestamp",
+          "distance",
+          "heartRate",
+          "speed",
+          "enhancedSpeed",
+          "power",
+          "cadence",
+          "fractionalCadence",
+          "altitude",
+          "enhancedAltitude",
+          "temperature",
+          "verticalOscillation",
+          "stanceTime",
+          "stepLength",
+          "verticalRatio",
+          "stamina",
+          "potentialStamina"
+        ];
+
+        const selected = records
+          .slice(args.offset, args.offset + args.limit)
+          .map((record, index) => ({
+            recordNumber: args.offset + index + 1,
+            ...Object.fromEntries(
+              fields
+                .filter(key => record[key] !== undefined)
+                .map(key => [
+                  key,
+                  record[key] instanceof Date
+                    ? (record[key] as Date).toISOString()
+                    : record[key]
+                ])
+            )
+          }));
+
+        return result({
+          activityId: data.activityId,
+          totalRecords: data.recordCount,
+          offset: args.offset,
+          returnedRecords: selected.length,
+          nextOffset:
+            args.offset + selected.length < records.length
+              ? args.offset + selected.length
+              : null,
+          records: selected
+        });
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "get_activity_splits",
+    {
+      description: "Garmin FIT native activity segments, including workout intervals, recovery, warmup, cooldown, running, walking and standing. Different split groups may overlap.",
+      inputSchema: {
+        activityId: z.union([
+          z.number().int().positive(),
+          z.string().regex(/^\d+$/)
+        ]),
+        group: z.enum([
+          "all",
+          "interval",
+          "runWalk"
+        ]).default("all"),
+        offset: z.number().int().min(0).default(0),
+        limit: z.number().int().min(1).max(100).default(50)
+      },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: true
+      }
+    },
+    async (args) => {
+      try {
+        const data = await decodeActivityFit(
+          env,
+          args.activityId
+        );
+
+        const splits = data.splits as unknown as
+          Record<string, unknown>[];
+
+        const filtered = splits.filter(split => {
+          const type = String(split.splitType ?? "");
+
+          if (args.group === "interval") {
+            return type.startsWith("interval");
+          }
+
+          if (args.group === "runWalk") {
+            return type.startsWith("rwd");
+          }
+
+          return true;
+        });
+
+        const fields = [
+          "messageIndex",
+          "splitType",
+          "totalDistance",
+          "totalTimerTime",
+          "totalElapsedTime",
+          "avgSpeed",
+          "maxSpeed",
+          "avgHeartRate",
+          "maxHeartRate",
+          "avgPower",
+          "maxPower",
+          "normalizedPower",
+          "avgCadence",
+          "avgRunningCadence",
+          "maxRunningCadence",
+          "totalAscent",
+          "totalDescent",
+          "avgVerticalOscillation",
+          "avgStanceTime",
+          "avgStepLength",
+          "avgVerticalRatio",
+          "totalCalories"
+        ];
+
+        const selected = filtered
+          .slice(args.offset, args.offset + args.limit)
+          .map((split, index) => {
+            const distance = Number(split.totalDistance);
+            const duration = Number(split.totalTimerTime);
+
+            return {
+              segmentNumber: args.offset + index + 1,
+              ...Object.fromEntries(
+                fields
+                  .filter(key => split[key] !== undefined)
+                  .map(key => [key, split[key]])
+              ),
+              paceSecondsPerKm:
+                distance > 0 &&
+                duration > 0 &&
+                Number.isFinite(duration)
+                  ? Math.round(duration * 1000 / distance)
+                  : null
+            };
+          });
+
+        return result({
+          activityId: data.activityId,
+          group: args.group,
+          totalSplits: splits.length,
+          filteredSplits: filtered.length,
+          offset: args.offset,
+          returnedSplits: selected.length,
+          nextOffset:
+            args.offset + selected.length < filtered.length
+              ? args.offset + selected.length
+              : null,
+          splits: selected
+        });
+      } catch (err) {
+        return failure(err);
+      }
+    }
+  );
 
   return server;
 }
